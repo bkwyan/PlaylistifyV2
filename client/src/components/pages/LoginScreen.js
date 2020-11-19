@@ -4,7 +4,8 @@ import SpotifyLogo from '../images/SpotifyLogo.png';
 import theme from '../styles/theme.js';
 const { fontSizes, colors } = theme;
 
-const LOGIN_URI = "https://";
+// API call for server side login
+const LOGIN_URL = "http://localhost:8888/login";
 
 const LoginScreenContainer = styled.div`
     display: flex;
@@ -32,7 +33,7 @@ const LoginScreen = () => {
     return(
         <LoginScreenContainer>
             <SpotifyLogoWrapper>
-                <a href = {LOGIN_URI}>
+                <a href = {LOGIN_URL}>
                     <SpotifyLogoImage src = {SpotifyLogo}/>
                 </a>
             </SpotifyLogoWrapper>

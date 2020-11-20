@@ -21,7 +21,7 @@ const stateKey = 'spotify_auth_state';
 
 // Requires format to be "Basic: *<base64 encoded client_id:clientsecret>*"
 const headers = {
-    'Authorization': 'Basic ' + new Buffer(`${CLIENT_ID}:${CLIENT_SECRET}`.toString('base64'))
+    'Authorization': 'Basic ' + new Buffer(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64')
 }
 
 // Function to generate a random string for the state
@@ -58,7 +58,7 @@ app.get('/login', (req, res) => {
         client_id: CLIENT_ID,
         response_type: 'code',
         redirect_uri: REDIRECT_URI,
-        state: generateRandomString(16),
+        state: state,
         scope: scope
     })}`);
 });
@@ -69,14 +69,16 @@ app.get('/callback', (req, res) => {
 
     // Authorization code that is used to exchange for an access token
     let code = req.query.code || null;
-    let state = req.query.state;
+    let state = req.query.state || null;
 
     // Access the stored state that was generated when logging in so we can compare it to the state that was returned
     let storedState = req.cookies ? req.cookies[stateKey] : null;
 
     // If the state doesn't match then theres a problem!
-    if(state !== storedState){
-        res.redirect('/#' + querystring.stringify({
+    if(state === null || state !== storedState){
+
+        // '#' Is included so we are able to utilize 'location.hash' to retrieve the access token and refresh token
+        res.redirect('/?' + querystring.stringify({
             error: 'state_mismatch'
         }));
     } else{
@@ -97,7 +99,7 @@ app.get('/callback', (req, res) => {
             if(!error && response.statusCode === 200){
                 
                 let access_token = body.access_token,
-                    refresh_token = body.refresh.access_token;
+                    refresh_token = body.refresh_token;
 
                 let spotifyAPIOptions = {
                     url: 'https://api.spotify.com/v1/me',
@@ -107,17 +109,13 @@ app.get('/callback', (req, res) => {
                     json: true
                 }
 
-                request.get(spotifyAPIOptions, (error, response, body) => {
-                    console.log(body);
-                })
-
                 // Store token in browser to make requests in the front end
-                res.redirect(`${FRONTEND_URI}/#${querystring.stringify(
+                res.redirect(`${FRONTEND_URI}/?${querystring.stringify({
                     access_token,
                     refresh_token
-                )}`);
+                })}`);
             } else{
-                res.redirect('/#' + 
+                res.redirect('/?' + 
                     querystring.stringify({
                         error: 'code'
                     })
